@@ -212,7 +212,22 @@ footer a{color:var(--sun-deep)}
 var APP_URL = "https://script.google.com/macros/s/AKfycby_qk9MaZr4fpBq9ObNPwWDYvmkvKU2A6RRMBPS2_-de2JtrLqE2TfAub2KWUwgMvQ99w/exec";
 
 function sendRec(rec){
-  return fetch(APP_URL,{method:"POST",body:JSON.stringify(rec)}).then(function(){return true}).catch(function(){return false});
+  return new Promise(function(res){
+    var cb="s_"+Date.now()+"_"+Math.floor(Math.random()*1e6);
+    var s=document.createElement("script");
+    function cleanup(){try{delete window[cb];s.remove()}catch(e){}}
+    window[cb]=function(){cleanup();res(true)};
+    s.onerror=function(){cleanup();res(false)};
+    s.src=APP_URL+"?reg=1&callback="+cb
+      +"&last="+encodeURIComponent(rec.last)
+      +"&first="+encodeURIComponent(rec.first)
+      +"&phone="+encodeURIComponent(rec.phone)
+      +"&email="+encodeURIComponent(rec.email)
+      +"&meal="+encodeURIComponent(rec.meal)
+      +"&ts="+encodeURIComponent(rec.ts);
+    document.body.appendChild(s);
+    setTimeout(function(){if(window[cb]){cleanup();res(false)}},15000);
+  });
 }
 function queue(){try{return JSON.parse(localStorage.getItem("wconf_queue")||"[]")}catch(e){return[]}}
 function setQueue(q){try{localStorage.setItem("wconf_queue",JSON.stringify(q))}catch(e){}}
